@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>心晴手记 · AI 情绪日记与共情陪伴</title>
+  <meta name="description" content="一个用 AI 倾听、理解并陪伴你的情绪日记小站。记录心情，看见情绪的起伏。" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ============ 顶部导航 ============ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">🌳</span>
+        <div class="brand-text">
+          <strong>心晴手记</strong>
+          <small>AI 情绪日记与共情陪伴</small>
+        </div>
+      </div>
+      <nav class="nav-tabs" aria-label="主导航">
+        <button class="tab-btn active" data-tab="write">✏️ 写日记</button>
+        <button class="tab-btn" data-tab="insight">📊 情绪趋势</button>
+        <button class="tab-btn" data-tab="history">📖 日记本</button>
+        <button class="tab-btn" data-tab="toolbox">🫧 情绪工具箱</button>
+        <button class="tab-btn" data-tab="about">⚙️ 关于与设置</button>
+      </nav>
+      <button class="theme-toggle" id="themeToggle" title="切换深色/浅色模式" aria-label="切换深色模式">🌙</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ============ 写日记 ============ -->
+    <section class="page active" id="page-write">
+      <div class="hero">
+        <div class="hero-text">
+          <h1>今天，心里是什么天气？</h1>
+          <p>把悄悄话留在这里。AI 会读懂你的情绪，陪你一起风雨或晴空。</p>
+        </div>
+        <div class="hero-deco" aria-hidden="true">
+          <span class="cloud cloud-1"></span>
+          <span class="cloud cloud-2"></span>
+          <span class="sun"></span>
+        </div>
+      </div>
+
+      <div class="card write-card">
+        <div class="card-head">
+          <h2>📝 写下此刻</h2>
+          <span class="today-date" id="todayDate"></span>
+        </div>
+
+        <!-- 心情选择 -->
+        <div class="field">
+          <label class="field-label">此刻的心情 <span class="hint">（选一个最接近的）</span></label>
+          <div class="mood-picker" id="moodPicker" role="radiogroup" aria-label="选择心情">
+            <button class="mood-btn" data-mood="1" data-score="1" role="radio" aria-checked="false">
+              <span class="mood-emoji">😢</span><span class="mood-name">很难过</span>
+            </button>
+            <button class="mood-btn" data-mood="2" data-score="2" role="radio" aria-checked="false">
+              <span class="mood-emoji">😕</span><span class="mood-name">有点低落</span>
+            </button>
+            <button class="mood-btn selected" data-mood="3" data-score="3" role="radio" aria-checked="true">
+              <span class="mood-emoji">😐</span><span class="mood-name">还行</span>
+            </button>
+            <button class="mood-btn" data-mood="4" data-score="4" role="radio" aria-checked="false">
+              <span class="mood-emoji">🙂</span><span class="mood-name">不错</span>
+            </button>
+            <button class="mood-btn" data-mood="5" data-score="5" role="radio" aria-checked="false">
+              <span class="mood-emoji">😄</span><span class="mood-name">很开心</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 强度 -->
+        <div class="field">
+          <label class="field-label" for="intensity">情绪强度 <span class="hint" id="intensityLabel">中等 · 3</span></label>
+          <input type="range" id="intensity" min="1" max="5" value="3" step="1" />
+          <div class="range-labels"><span>淡淡地</span><span>很强烈</span></div>
+        </div>
+
+        <!-- 日记正文 -->
+        <div class="field">
+          <label class="field-label" for="diaryText">想说的话 <span class="hint" id="charCount">0 字</span></label>
+          <p class="prompt-hint">💡 不知道从哪写起？<button class="inline-link" id="promptBtn">换一个小问题</button> <span id="promptText">今天有没有一件让你嘴角上扬的小事？</span></p>
+          <textarea id="diaryText" rows="7" placeholder="今天发生了什么？开心的、委屈的、说不出口的，都可以写下来……&#10;&#10;例如：今天小组作业被否了，明明我准备了好久，有点泄气……"></textarea>
+        </div>
+
+        <div class="field row-field">
+          <div class="field half">
+            <label class="field-label" for="diaryTags">标签 <span class="hint">（选填，用逗号分隔）</span></label>
+            <input type="text" id="diaryTags" placeholder="学习, 朋友, 家人…" />
+          </div>
+          <div class="field half">
+            <label class="field-label">保存方式</label>
+            <label class="checkbox-line"><input type="checkbox" id="anonymous" /> 匿名树洞模式</label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="clearBtn">清空</button>
+          <button class="btn btn-primary" id="saveBtn">🌳 交给树洞分析</button>
+        </div>
+        <p class="privacy-note">🔒 所有日记仅保存在你的浏览器本地（localStorage），不会上传到任何服务器。</p>
+      </div>
+
+      <!-- AI 回应卡片 -->
+      <div class="card result-card hidden" id="resultCard">
+        <div class="card-head">
+          <h2>🌿 树洞的回应</h2>
+          <span class="badge" id="analysisMethod">本地情绪分析引擎</span>
+        </div>
+
+        <div class="result-grid">
+          <div class="result-item">
+            <div class="result-kicker">识别到的情绪</div>
+            <div class="result-value" id="resultEmotion">—</div>
+            <div class="result-sub" id="resultConfidence">—</div>
+          </div>
+          <div class="result-item">
+            <div class="result-kicker">心情温度</div>
+            <div class="result-value" id="resultScore">—</div>
+            <div class="result-sub" id="resultTrend">—</div>
+          </div>
+          <div class="result-item">
+            <div class="result-kicker">关键词</div>
+            <div class="result-value small" id="resultKeywords">—</div>
+            <div class="result-sub">从你的文字中提取</div>
+          </div>
+        </div>
+
+        <div class="reply-block">
+          <div class="reply-avatar">🌳</div>
+          <div class="reply-bubble" id="resultReply">—</div>
+        </div>
+
+        <div class="suggest-block">
+          <h3>💡 给你的三个小建议 <span class="hint">（可加入下方的行动清单，逐项打卡）</span></h3>
+          <div class="suggest-list" id="resultSuggestions"></div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-ghost" id="copyBtn">复制回应</button>
+          <button class="btn btn-primary-outline" id="viewHistoryBtn">去日记本看看 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 情绪趋势 ============ -->
+    <section class="page" id="page-insight">
+      <div class="section-head">
+        <h1>📊 看见情绪的起伏</h1>
+        <p>情绪没有好坏，起伏也是真实生活的样子。</p>
+      </div>
+
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card"><div class="stat-num" id="statDays">0</div><div class="stat-label">记录天数</div></div>
+        <div class="stat-card"><div class="stat-num" id="statAvg">—</div><div class="stat-label">平均心情分</div></div>
+        <div class="stat-card"><div class="stat-num" id="statTop">—</div><div class="stat-label">最常见情绪</div></div>
+        <div class="stat-card"><div class="stat-num" id="statStreak">0</div><div class="stat-label">连续记录（天）</div></div>
+      </div>
+
+      <!-- 每周心情简报 -->
+      <div class="card report-card">
+        <div class="card-head">
+          <h2>📬 本周心情简报</h2>
+          <button class="btn btn-ghost btn-sm" id="copyReportBtn">复制简报</button>
+        </div>
+        <div class="report-body" id="reportBody"></div>
+      </div>
+
+      <div class="card chart-card">
+        <div class="card-head">
+          <h2>心情曲线</h2>
+          <div class="segmented" id="rangeSwitch">
+            <button class="seg-btn active" data-range="7">近 7 天</button>
+            <button class="seg-btn" data-range="30">近 30 天</button>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <svg id="moodChart" viewBox="0 0 720 260" preserveAspectRatio="none" role="img" aria-label="心情趋势折线图"></svg>
+        </div>
+        <p class="chart-caption">纵轴为 1–5 分的心情温度，越靠上代表心情越晴朗。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🗓️ 心情日历</h2><span class="hint">颜色越暖，心情越好</span></div>
+        <div class="calendar" id="calendar"></div>
+      </div>
+
+      <div class="insight-grid">
+        <div class="card">
+          <div class="card-head"><h2>🎯 情绪分布</h2><span class="hint">全部记录</span></div>
+          <div class="distribution-wrap">
+            <div class="donut" id="emotionDonut"><div class="donut-center"><strong id="donutTotal">0</strong><span>篇日记</span></div></div>
+            <div class="donut-legend" id="donutLegend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>☁️ 高频词云</h2><span class="hint">近 30 天</span></div>
+          <div class="word-cloud" id="wordCloud"></div>
+          <p class="chart-caption">字号越大，说明你越常写到它。词频来自本地分析，不上传任何数据。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 日记本 ============ -->
+    <section class="page" id="page-history">
+      <div class="section-head">
+        <h1>📖 我的日记本</h1>
+        <p>每一条记录，都是你认真生活过的证据。</p>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="🔍 搜索日记内容或标签…" />
+        <select id="emotionFilter" aria-label="按情绪筛选">
+          <option value="">全部情绪</option>
+          <option value="喜悦">😄 喜悦</option>
+          <option value="平静">😌 平静</option>
+          <option value="焦虑">😰 焦虑</option>
+          <option value="悲伤">😢 悲伤</option>
+          <option value="愤怒">😠 愤怒</option>
+          <option value="疲惫">😮‍💨 疲惫</option>
+          <option value="感动">🥹 感动</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="exportBtn">导出 JSON</button>
+        <button class="btn btn-ghost btn-sm" id="importBtn">导入 JSON</button>
+        <input type="file" id="importFile" accept="application/json" hidden />
+      </div>
+      <div class="entry-list" id="entryList"></div>
+      <div class="empty-state hidden" id="historyEmpty">
+        <div class="empty-emoji">🫙</div>
+        <h3>日记本还是空的</h3>
+        <p>去写下第一篇吧，树洞会一直在这里。</p>
+        <button class="btn btn-primary" id="goWriteBtn">开始记录</button>
+      </div>
+    </section>
+
+    <!-- ============ 情绪工具箱 ============ -->
+    <section class="page" id="page-toolbox">
+      <div class="section-head">
+        <h1>🫧 情绪工具箱</h1>
+        <p>情绪太满的时候，先照顾自己。这里有几个可以立刻上手的小方法。</p>
+      </div>
+
+      <div class="calm-quote">
+        <span class="quote-mark">“</span>
+        <p id="calmQuoteText">情绪像天气，会来，也会走。你不需要赶走它，只要照顾好自己。</p>
+        <button class="inline-link" id="newQuoteBtn">换一句 ↻</button>
+      </div>
+
+      <div class="tool-grid">
+        <div class="card tool-card">
+          <div class="card-head"><h2>🌬️ 4-7-8 呼吸</h2><span class="badge">约 1 分钟</span></div>
+          <p class="prose">吸气 4 秒 → 屏息 7 秒 → 呼气 8 秒。跟着圆圈慢慢来，重复 4 轮。</p>
+          <div class="breath-stage">
+            <div class="breath-circle" id="breathCircle"><span id="breathLabel">准备好了吗？</span></div>
+          </div>
+          <div class="actions center">
+            <button class="btn btn-primary" id="breathStartBtn">开始练习</button>
+            <button class="btn btn-ghost" id="breathStopBtn" disabled>结束</button>
+          </div>
+          <p class="chart-caption" id="breathRound">第 0 / 4 轮</p>
+        </div>
+
+        <div class="card tool-card">
+          <div class="card-head"><h2>🖐️ 5-4-3-2-1 着陆练习</h2><span class="badge">回到此刻</span></div>
+          <p class="prose">当思绪乱成一团时，用五官把自己带回当下。按顺序走完 5 步。</p>
+          <div class="grounding-steps" id="groundingSteps"></div>
+          <div class="actions center">
+            <button class="btn btn-primary-outline" id="groundingNextBtn">下一步 →</button>
+            <button class="btn btn-ghost btn-sm" id="groundingResetBtn">重新开始</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>✅ 我的小行动清单</h2>
+          <span class="hint" id="actionProgress">今天 0 / 0 完成</span>
+        </div>
+        <p class="prose">在写日记后的建议里点「加入行动清单」，把想做的小事存到这里。完成后打勾，给自己一点肯定。</p>
+        <div class="action-list" id="actionList"></div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+
+      <div class="card help-card">
+        <div class="card-head"><h2>🤝 如果情绪持续低落</h2></div>
+        <p class="prose">树洞是倾听者，不是治疗师。如果难过的感觉持续两周以上、影响睡眠与学习，或出现伤害自己的念头，请及时联系学校心理咨询中心或当地心理援助热线。求助是勇敢，不是软弱。</p>
+      </div>
+    </section>
+
+    <!-- ============ 关于与设置 ============ -->
+    <section class="page" id="page-about">
+      <div class="section-head">
+        <h1>⚙️ 关于与设置</h1>
+        <p>关于这个作品，以及你数据的去向。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>这个作品做了什么</h2></div>
+        <p class="prose">「心晴手记」是一个 AI + 心理健康的交叉类网页作品。它用<strong>本地情绪分析引擎</strong>识别日记中的情绪关键词与情感倾向，结合你选择的心情分与强度，生成有温度的共情回应与个性化建议；所有日记保存在浏览器本地，并通过心情曲线、日历热力图、情绪分布环与高频词云呈现情绪变化。此外还提供<strong>情绪工具箱</strong>（4-7-8 呼吸、5-4-3-2-1 着陆练习、小行动打卡）与<strong>每周心情简报</strong>，让记录不止于"看见"，更能"照顾"。</p>
+        <p class="prose">作品无需后端即可完整运行，因此可直接部署到 GitHub Pages。如果你想体验大模型驱动的回应，也可以在下方填入兼容 OpenAI 格式的 API 地址与密钥（实验用途，请勿在公共设备保存密钥）。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2>🤖 大模型接入（可选）</h2><span class="badge">实验功能</span></div>
+        <div class="field">
+          <label class="field-label" for="apiBase">API 地址（OpenAI 兼容）</label>
+          <input type="text" id="apiBase" placeholder="https://api.example.com/v1/chat/completions" />
+        </div>
+        <div class="field row-field">
+          <div class="field half">
+            <label class="field-label" for="apiKey">API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-…（仅保存在本机浏览器）" />
+          </div>
+          <div class="field half">
+            <label class="field-label" for="apiModel">模型名</label>
+            <input type="text" id="apiModel" placeholder="gpt-4o-mini / deepseek-chat 等" />
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary-outline" id="saveSettingsBtn">保存设置</button>
+          <button class="btn btn-ghost" id="clearSettingsBtn">清除设置</button>
+          <span class="save-tip" id="saveTip"></span>
+        </div>
+        <p class="privacy-note">⚠️ 密钥只保存在当前浏览器 localStorage 中。公共电脑上请勿使用此功能。</p>
+      </div>
+
+      <div class="card danger-card">
+        <div class="card-head"><h2>数据管理</h2></div>
+        <p class="prose">清空后无法恢复，建议先导出 JSON 备份。</p>
+        <button class="btn btn-danger" id="clearAllBtn">清空全部日记</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>🌳 心晴手记 ·《人工智能基础与应用》课程大作业</p>
+    <p class="footer-sub">AI 是倾听者，不是治疗师。若长期情绪低落，请及时寻求专业帮助。</p>
+  </footer>
+
+  <!-- 轻提示 -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/emotion-engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

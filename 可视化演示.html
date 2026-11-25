@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>心晴手记 · 可视化成果演示</title>
+<style>
+  :root{
+    --bg:#fdf8f4; --card:#fff; --ink:#3f3a37; --ink-soft:#7d746e; --ink-faint:#a79e97;
+    --primary:#e58b73; --primary-dark:#cf7259; --primary-soft:#fdeee8;
+    --green:#78a98a; --green-soft:#eaf4ee; --line:#efe5dd;
+    --shadow:0 10px 30px rgba(120,90,70,0.07); --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1080px;margin:0 auto;padding:30px 24px 60px;}
+
+  /* 顶部条 */
+  .topbar{background:linear-gradient(120deg,#fce9df,#fdf3ea);border:1px solid #f6e2d6;border-radius:var(--radius);padding:26px 32px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;}
+  .topbar h1{margin:0;font-size:25px;color:#6b4e42;}
+  .topbar p{margin:4px 0 0;color:#95796c;font-size:14px;}
+  .badge-demo{background:#fff;color:var(--primary-dark);border:1px solid #f0c9b8;border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;}
+
+  /* 引导条 */
+  .guide{background:var(--green-soft);border:1px solid #cfe4d6;border-radius:14px;padding:14px 20px;margin-bottom:24px;color:#4e6b58;font-size:13px;}
+  .guide b{color:#3c5c48;}
+
+  /* 统计卡 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;text-align:center;box-shadow:var(--shadow);}
+  .stat .num{font-size:28px;font-weight:700;color:var(--primary-dark);}
+  .stat .lab{font-size:12px;color:var(--ink-faint);margin-top:2px;}
+
+  /* 通用卡 */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px;margin-bottom:22px;box-shadow:var(--shadow);}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:18px;color:var(--ink);}
+  .card-head .sub{font-size:12px;color:var(--ink-faint);}
+  .seg{display:flex;background:var(--bg);border-radius:999px;padding:3px;}
+  .seg button{border:none;background:transparent;padding:6px 14px;border-radius:999px;font-size:12px;color:var(--ink-soft);cursor:pointer;}
+  .seg button.active{background:#fff;color:var(--primary-dark);box-shadow:0 2px 6px rgba(0,0,0,.06);}
+
+  /* 折线图 */
+  #chart{width:100%;height:280px;display:block;}
+  .legend{display:flex;gap:18px;justify-content:center;font-size:12px;color:var(--ink-faint);margin-top:6px;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+  /* 情绪分布条 */
+  .dist-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .dist-name{width:64px;font-size:13px;color:var(--ink-soft);text-align:right;flex:none;}
+  .dist-track{flex:1;background:var(--bg);border-radius:999px;height:16px;overflow:hidden;}
+  .dist-fill{height:100%;border-radius:999px;transition:width .6s;}
+  .dist-num{width:30px;font-size:12px;color:var(--ink-faint);}
+
+  /* 日历 */
+  .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  .cal-cell{aspect-ratio:1;border-radius:10px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--ink-faint);border:1px solid transparent;}
+  .cal-cell.has{border-color:#f0ddd0;}
+  .cal-cell .d{font-size:10px;opacity:.75;}
+  .cal-cell .e{font-size:19px;line-height:1.2;}
+  .cal-head{background:transparent;aspect-ratio:auto;text-align:center;font-size:11px;}
+
+  /* 日记列表 */
+  .entry{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;background:#fff;}
+  .entry-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .entry-mood{font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px;}
+  .entry-mood .emoji{font-size:22px;}
+  .entry-date{font-size:12px;color:var(--ink-faint);}
+  .tagline{margin:8px 0;}
+  .tag{background:var(--bg);color:var(--ink-soft);border-radius:999px;padding:2px 9px;font-size:11px;margin-right:5px;}
+  .entry-text{font-size:13.5px;color:#5d554f;white-space:pre-wrap;line-height:1.85;margin:6px 0;}
+  .entry-reply{background:var(--green-soft);border-radius:10px;padding:9px 13px;font-size:12.5px;color:#4e6b58;margin-top:10px;white-space:pre-line;}
+  .footer{text-align:center;color:var(--ink-faint);font-size:12px;padding:20px;}
+
+  @media(max-width:760px){
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .wrap{padding:18px 14px 40px;}
+    .card{padding:20px 16px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div>
+      <h1>🌳 心晴手记 · 可视化成果演示</h1>
+      <p>以下为代写的 18 篇示例日记，展示作品的情绪分析、统计与图表效果</p>
+    </div>
+    <div class="badge-demo">📊 示例数据 · 真实引擎分析</div>
+  </div>
+
+  <div class="guide">
+    💡 <b>说明：</b>这些日记由我代写，覆盖最近 18 天，情绪有低谷也有回升。页面中的情绪、心情分、关键词与回应均由项目自带的分析引擎真实计算得出。你可以在正式应用的「日记本」页点击 <b>导入 JSON</b>，载入 <code>示例日记.json</code> 后亲自体验完整交互。
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="sDays">—</div><div class="lab">记录天数</div></div>
+    <div class="stat"><div class="num" id="sAvg">—</div><div class="lab">平均心情分</div></div>
+    <div class="stat"><div class="num" id="sTop">—</div><div class="lab">最常见情绪</div></div>
+    <div class="stat"><div class="num" id="sStreak">—</div><div class="lab">连续记录（天）</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>📈 心情曲线</h2>
+      <div class="seg">
+        <button class="active" data-range="7">近 7 天</button>
+        <button data-range="18">近 18 天</button>
+      </div>
+    </div>
+    <svg id="chart" viewBox="0 0 720 280" preserveAspectRatio="none"></svg>
+    <div class="legend"><span><i style="background:var(--primary)"></i>每日平均心情分（1–5）</span><span><i style="background:var(--green)"></i>有记录的日子</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>🎭 情绪分布</h2><span class="sub">共 18 篇日记</span></div>
+    <div id="dist"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>🗓️ 心情日历</h2><span class="sub">颜色越暖，心情越好</span></div>
+    <div class="calendar" id="calendar"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>📖 日记本（节选）</h2><span class="sub">最近 6 篇 · 含 AI 回应</span></div>
+    <div id="entries"></div>
+  </div>
+
+  <div class="footer">🌳 心晴手记 ·《人工智能基础与应用》课程大作业</div>
+</div>
+
+<script src="demo-data.js"></script>
+<script>
+(function(){
+  const E = window.DEMO_ENTRIES || [];
+  const META = {喜悦:{emoji:'😄',color:'#e0a35c'},平静:{emoji:'😌',color:'#8fb39c'},焦虑:{emoji:'😰',color:'#c98a9d'},悲伤:{emoji:'😢',color:'#8ba6c4'},愤怒:{emoji:'😠',color:'#d97766'},疲惫:{emoji:'😮‍💨',color:'#a99bb5'},感动:{emoji:'🥹',color:'#d99b8e'}};
+  const pad=n=>String(n).padStart(2,'0');
+  const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+  let range=7;
+
+  // 统计
+  const days=new Set(E.map(e=>dkey(new Date(e.createdAt)))).size;
+  const avg=(E.reduce((s,e)=>s+e.analysis.score,0)/E.length).toFixed(1);
+  const cnt={}; E.forEach(e=>cnt[e.analysis.emotion]=(cnt[e.analysis.emotion]||0)+1);
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('sDays').textContent=days;
+  document.getElementById('sAvg').textContent=avg;
+  document.getElementById('sTop').textContent=top?`${META[top[0]].emoji}${top[0]}`:'—';
+  // 连续天数（数据最新一天为今天）
+  const allDays=[...new Set(E.map(e=>dkey(new Date(e.createdAt))))].sort().reverse();
+  let streak=0; let cur=new Date(allDays[0]+'T12:00:00');
+  const set=new Set(allDays);
+  while(set.has(dkey(cur))){streak++;cur.setDate(cur.getDate()-1);}
+  document.getElementById('sStreak').textContent=streak;
+
+  // 分布条
+  const max=Math.max(...Object.values(cnt));
+  document.getElementById('dist').innerHTML=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>{
+    const m=META[k]||{emoji:'',color:'#ccc'};
+    return `<div class="dist-row"><div class="dist-name">${m.emoji} ${k}</div><div class="dist-track"><div class="dist-fill" style="width:${v/max*100}%;background:${m.color}"></div></div><div class="dist-num">${v}</div></div>`;
+  }).join('');
+
+  // 折线图
+  function drawChart(){
+    const svg=document.getElementById('chart');
+    const W=720,H=280,pL=42,pR=16,pT=16,pB=32;
+    const latest=new Date(allDays[0]+'T12:00:00');
+    const points=[];
+    for(let i=range-1;i>=0;i--){
+      const d=new Date(latest); d.setDate(d.getDate()-i);
+      const key=dkey(d);
+      const list=E.filter(e=>dkey(new Date(e.createdAt))===key);
+      points.push({d,key,avg:list.length?list.reduce((s,e)=>s+e.analysis.score,0)/list.length:null,label:`${d.getMonth()+1}/${d.getDate()}`,n:list.length});
+    }
+    const x=i=>pL+i*(W-pL-pR)/Math.max(1,points.length-1);
+    const y=v=>pT+(5-v)*(H-pT-pB)/4;
+    let h='';
+    for(let v=1;v<=5;v++){
+      h+=`<line x1="${pL}" y1="${y(v)}" x2="${W-pR}" y2="${y(v)}" stroke="#efe5dd" stroke-width="1"/>`;
+      h+=`<text x="${pL-10}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="#a79e97">${v}</text>`;
+    }
+    const step=range>10?3:1;
+    points.forEach((p,i)=>{if(i%step===0||i===points.length-1)h+=`<text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="10" fill="#a79e97">${p.label}</text>`;});
+    const valid=points.map((p,i)=>({...p,i})).filter(p=>p.avg!==null);
+    if(valid.length>1){
+      const pts=valid.map(p=>`${x(p.i)},${y(p.avg)}`).join(' ');
+      h+=`<polygon points="${x(valid[0].i)},${H-pB} ${pts} ${x(valid[valid.length-1].i)},${H-pB}" fill="rgba(229,139,115,0.09)"/>`;
+      h+=`<polyline points="${pts}" fill="none" stroke="#e58b73" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    }
+    valid.forEach(p=>{
+      h+=`<circle cx="${x(p.i)}" cy="${y(p.avg)}" r="5" fill="#fff" stroke="#78a98a" stroke-width="2.5"><title>${p.label}：${p.avg.toFixed(1)} 分（${p.n} 篇）</title></circle>`;
+      h+=`<text x="${x(p.i)}" y="${y(p.avg)-11}" text-anchor="middle" font-size="10" fill="#cf7259">${p.avg.toFixed(1)}</text>`;
+    });
+    svg.innerHTML=h;
+  }
+  drawChart();
+  document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); range=+b.dataset.range; drawChart();
+  }));
+
+  // 日历（最近 28 天）
+  const cal=document.getElementById('calendar');
+  let ch=['日','一','二','三','四','五','六'].map(d=>`<div class="cal-head">${d}</div>`).join('');
+  const latest=new Date(allDays[0]+'T12:00:00');
+  const start=new Date(latest); start.setDate(start.getDate()-27); start.setDate(start.getDate()-start.getDay());
+  for(let i=0;i<35;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    if(d>latest) break;
+    const key=dkey(d);
+    const list=E.filter(e=>dkey(new Date(e.createdAt))===key);
+    let style='',emoji='';
+    if(list.length){
+      const a=list.reduce((s,e)=>s+e.analysis.score,0)/list.length;
+      const bg=['#e8eef5','#e5edf2','#f2ece3','#f9e0d3','#f7cfbb'][Math.max(0,Math.min(4,Math.round(a)-1))];
+      style=`background:${bg};border-color:#e9d9cc;`;
+      emoji=META[list[0].analysis.emotion]?.emoji||'';
+    }
+    ch+=`<div class="cal-cell ${list.length?'has':''}" style="${style}" title="${key}${list.length?' · '+list.length+' 篇':''}"><span class="d">${d.getDate()}</span>${emoji?`<span class="e">${emoji}</span>`:''}</div>`;
+  }
+  cal.innerHTML=ch;
+
+  // 日记节选
+  const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  document.getElementById('entries').innerHTML=E.slice(0,6).map(e=>{
+    const a=e.analysis;
+    return `<div class="entry">
+      <div class="entry-top"><div class="entry-mood"><span class="emoji">${a.emoji}</span>${esc(a.emotion)} · ${a.score} 分</div><div class="entry-date">${fmt(e.createdAt)}</div></div>
+      <div class="tagline">${e.tags.map(t=>`<span class="tag">#${esc(t)}</span>`).join('')}</div>
+      <div class="entry-text">${esc(e.text)}</div>
+      <div class="entry-reply">🌳 ${esc(a.reply)}</div>
+    </div>`;
+  }).join('');
+})();
+</script>
+</body>
+</html>
